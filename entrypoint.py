@@ -1,4 +1,5 @@
 import json
+import statistics
 import redis as redis
 from flask import Flask, request
 from loguru import logger
@@ -34,4 +35,9 @@ def record_engine_temperature():
 
 @app.route('/collect', methods=['POST'])
 def collect_engine_temperature():
-    return {"success": True}, 200
+    database = redis.Redis(host="redis", port=6379, db=0, decode_responses=True)
+    data = [float(v) for v in database.lrange(DATA_KEY, 0, -1)]
+    current = data[0]
+    average = statistics.mean(data=data)
+    response = {"current_engine_temperature": current, "average_engine_temperature": average }
+    return response, 200
